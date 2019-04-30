@@ -60,5 +60,13 @@ bklyn_deaths_long %>%
   #facet_wrap(~sex) +
   b_theme 
 
+nyc_deaths <- read_csv("nyc_deaths.csv")
+nyc_pop <- read_csv("nyc_pop.csv")
+
+nyc_deaths <- nyc_deaths[1:184,]
+nyc_pop <- nyc_pop[1:184,]
+
+nyc_data <- nyc_pop %>%
+  left_join(nyc_deaths, by = "Area Name")
 
 
