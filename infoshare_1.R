@@ -69,4 +69,10 @@ nyc_pop <- nyc_pop[1:184,]
 nyc_data <- nyc_pop %>%
   left_join(nyc_deaths, by = "Area Name")
 
+male_deaths_11209 <- read_csv("male_deaths_11209.csv")
+female_deaths_11209 <- read_csv("female_deaths_11209.csv")
+
+pop_by_sex <- read_csv("population_11209.csv")
+pop_by_race <- read_csv("pop_race_11209.csv")
+pop_by_hh_size <- read_csv("household_size_11209.csv")
 
