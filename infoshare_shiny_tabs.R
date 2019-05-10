@@ -3,6 +3,9 @@ library(dplyr)
 library(readr)
 library(shinythemes)
 
+nyc_data <- read_csv("https://raw.githubusercontent.com/katiesegreti/infoshare/master/nyc_data_sample.csv")
+
+
 ui <- fluidPage(
   theme = shinytheme("flatly"),
   h1("Area Comparison"),
@@ -27,22 +30,26 @@ ui <- fluidPage(
       # Select area to compare  
       selectInput(inputId = "area_type", 
                   label = "Areas to Compare:",
-                  choices = c("Borough" = "borough", 
+                  choices = c( 
                               "Zip Code" = "zipcode",
                               "Census Tract" = "censustract",
                               "Community District" = "communitydistrtict"), 
-                  selected = "City"),
+                  selected = "Zip Code"),
+      checkboxGroupInput(inputId = "boro", label = "Borough", 
+                   c("Bronx", "Brooklyn", "Manhattan",
+                                      "Queens", "Staten Island"), selected = "Bronx",
+                   inline = TRUE),
       # Select variables to view
       fluidRow(
         column(4, 
                checkboxGroupInput(inputId = "selected_var",
-                         label = "Select demographic data:",
-                         choices = names(nyc_data[2:32]),
-                         selected = c("Area Name"))),
+                                  label = "Select demographic data:",
+                                  choices = names(nyc_data[2:32]),
+                                  selected = c("Area Name"))),
         column(4,
                checkboxGroupInput(inputId = "selected_var_2",
-                         label = "Select health data:",
-                         choices = names(nyc_data[34:73]))),
+                                  label = "Select health data:",
+                                  choices = names(nyc_data[34:73]))),
         column(4,
                checkboxGroupInput(inputId = "selected_var_3",
                                   label = "Select socio-economic data:",
@@ -58,6 +65,8 @@ ui <- fluidPage(
     # Create "Table" tab
     tabPanel(
       title = "Table",
+      downloadButton(outputId = "download_data", label = "Download data"),
+      br(), br(),
       DT::dataTableOutput(outputId = "nyc_table")
     )
   )
@@ -81,8 +90,10 @@ server <- function(input, output) {
   # Create reactive data frame
   fields_selected <- reactive({
     req(input$selected_var) # ensure input$selected_var is available
+    #req(input$boro)
     select(nyc_data, c(input$selected_var, input$selected_var_2,
-                       input$selected_var_3)) # select columns 
+                       input$selected_var_3)) %>%
+      filter(nyc_data$borough == input$boro | nyc_data$borough == "New York City") # select columns 
   })
   
   
@@ -99,24 +110,20 @@ server <- function(input, output) {
   # Download file
   output$download_data <- downloadHandler(
     filename = function() {
-      paste0("infoshare.", input$filetype)
+      paste0("infoshare.", "csv")
     },
-    content = function(file) { 
-      if(input$filetype == "csv"){ 
-        write_csv(fields_selected() %>% select(input$selected_var), file) 
-      }
-      if(input$filetype == "tsv"){ 
-        write_tsv(fields_selected() %>% select(input$selected_var), file) 
-      }
+    content = function(file) {
+      
+      write_csv(fields_selected() %>% select(input$selected_var), file)
     }
   )
   
-#   output$plot <- renderPlot({
-#     data <- filtered_data()
-#     ggplot(data, aes(gdpPercap, lifeExp)) +
-#       geom_point() +
-#       scale_x_log10()
-#   })
+  #   output$plot <- renderPlot({
+  #     data <- filtered_data()
+  #     ggplot(data, aes(gdpPercap, lifeExp)) +
+  #       geom_point() +
+  #       scale_x_log10()
+  #   })
 }
 
 shinyApp(ui, server)

@@ -9,17 +9,13 @@ my_css <- "
 /* Change the background colour of the download button
 to orange. */
 background: orange;
-
 /* Change the text size to 20 pixels. */
-
 }
-
 #table {
 /* Change the text colour of the table to red. */
-
 }
 "
-
+nyc_data <- read_csv("https://raw.githubusercontent.com/katiesegreti/infoshare/master/nyc_data_sample.csv")
 # UI
 ui <- fluidPage(
   theme = shinytheme("united"),
@@ -87,12 +83,12 @@ ui <- fluidPage(
 # Server
 server <- function(input, output) {
   
-  male_table <- male_deaths_11209
-  female_table <- female_deaths_11209
-  pop_table <- pop_by_sex
-  pop_race_table <- pop_by_race
-  hh_table <- pop_by_hh_size
-
+  male_table <- read_csv("https://raw.githubusercontent.com/katiesegreti/infoshare/master/male_deaths_11209.csv")
+  female_table <- read_csv("https://raw.githubusercontent.com/katiesegreti/infoshare/master/female_deaths_11209.csv")
+  pop_table <- read_csv("https://raw.githubusercontent.com/katiesegreti/infoshare/master/population_11209.csv")
+  pop_race_table <- read_csv("https://raw.githubusercontent.com/katiesegreti/infoshare/master/pop_race_11209.csv")
+  hh_table <- read_csv("https://raw.githubusercontent.com/katiesegreti/infoshare/master/household_size_11209.csv")
+  
   #first data table
   output$table_3 <- DT::renderDataTable({
     DT::datatable(data = pop_race_table, options = list(pageLength = 10),
@@ -106,10 +102,10 @@ server <- function(input, output) {
   })
   #first data table
   output$table_4 <- DT::renderDataTable({
-    DT::datatable(data = pop_by_hh_size, options = list(pageLength = 10),
+    DT::datatable(data = hh_table, options = list(pageLength = 10),
                   rownames = FALSE) %>%
-      DT::formatStyle(names(pop_by_hh_size),
-                      background = DT::styleColorBar(range(pop_by_hh_size[2]), 'lightblue'),
+      DT::formatStyle(names(hh_table),
+                      background = DT::styleColorBar(range(hh_table[2]), 'lightblue'),
                       backgroundSize = '98% 88%',
                       backgroundRepeat = 'no-repeat',
                       backgroundPosition = 'center')
@@ -120,10 +116,10 @@ server <- function(input, output) {
     DT::datatable(data = male_table, options = list(pageLength = 10),
                   rownames = FALSE) %>%
       DT::formatStyle(names(male_table),
-                   background = DT::styleColorBar(range(male_table[2]), 'lightblue'),
-                  backgroundSize = '98% 88%',
-                  backgroundRepeat = 'no-repeat',
-                  backgroundPosition = 'center')
+                      background = DT::styleColorBar(range(male_table[2]), 'lightblue'),
+                      backgroundSize = '98% 88%',
+                      backgroundRepeat = 'no-repeat',
+                      backgroundPosition = 'center')
     
   })
   #second data table
