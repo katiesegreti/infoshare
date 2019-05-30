@@ -2,6 +2,7 @@ library(shiny)
 library(dplyr)
 library(readr)
 library(shinythemes)
+library(DT)
 # css
 my_css <- "
 #download_data {
@@ -69,9 +70,15 @@ ui <- fluidPage(
     
     # Output(s)
     mainPanel(
-      h1("Map"),
-      leafletOutput("nyc_map",  height = 900)
-      
+     tabsetPanel( 
+       tabPanel(
+        title = "Map",
+      leafletOutput("nyc_map",  height = 900)),
+      tabPanel(
+        title = "Table",
+        DT::dataTableOutput(outputId = "table1")
+        )
+      )
     )
   )
 )
@@ -84,19 +91,26 @@ server <- function(input, output) {
     req(input$selected_var) # ensure input$selected_var is available
     if(input$area_type == "borough") {data1 <- filter(data, borough == input$boro)}
     else{data1 <- data}
-    
+    selected <- input$selected_var
     data1 %>% 
-      select(c(ZIPCODE, `Area Name`,  input$selected_var, "total_pop"))
-    #select(data, c(ZIPCODE, `Area Name`,  input$selected_var, "total_pop")) # select columns 
+      select(c(ZIPCODE, `Area Name`,  input$selected_var, total_pop)) %>%
+      mutate(pct = round(data1[,selected] / total_pop, 2) * 100) %>%
+      filter(!is.na(pct))
   })
   
   # Create data table
-  # output$nyc_table <- DT::renderDataTable({
+  output$table1 <- DT::renderDataTable({
   #   req(input$selected_var)
-  #   DT::datatable(data = fields_selected() %>% select(input$selected_var), 
-  #                 options = list(pageLength = 25), 
-  #                 rownames = FALSE)
-  # })
+    DT::datatable(data = selected_data(), 
+                   options = list(pageLength = 25), 
+                   rownames = FALSE) %>%
+      DT::formatStyle(names(selected_data()),
+                      background = DT::styleColorBar(range(selected_data()[5]), 'lightblue'),
+                      backgroundSize = '98% 88%',
+                      backgroundRepeat = 'no-repeat',
+                      backgroundPosition = 'center')
+    
+   })
   
   
   # Create map
