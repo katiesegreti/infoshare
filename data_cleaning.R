@@ -21,8 +21,6 @@ names(HRA01_raw) <- c("X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9",
 
 
 
-
-
 ##fill in the borough names before moving values?
 boros <- HRA01_raw %>%
   filter(!is.na(X1)) %>%
@@ -34,7 +32,7 @@ boros <- HRA01_raw %>%
 
 county <- rep(0, nrow(HRA01_raw))
 for(i in 5:nrow(HRA01_raw)) {
- county[i] <- ifelse(!is.na(HRA01_raw$X1[i]), HRA01_raw$X1[i], county[i-1])
+  county[i] <- ifelse(!is.na(HRA01_raw$X1[i]), HRA01_raw$X1[i], county[i-1])
 }
 
 HRA01_raw1 <- cbind(HRA01_raw, county)
@@ -91,7 +89,7 @@ HRA01_raw1 <- HRA01_raw1 %>%
 
 #digits in census tract number
 HRA01_raw1 <- HRA01_raw1 %>%
-  mutate(ct_len = nchar(X2))
+  mutate(ct_len = ifelse(X2 != "total", nchar(X2), 1))
 
 #
 
@@ -153,9 +151,9 @@ nrow(c_tracts_m) == sum(str_count(c_tracts_m$dispname, m_pattern))
 nrow(c_tracts_q) == sum(str_count(c_tracts_q$dispname, q_pattern))
 nrow(c_tracts_si) == sum(str_count(c_tracts_si$dispname, si_pattern))
 
-bx_code <- "0050"
+bx_code <- "005"
 bk_code <- "047"
-m_code <- "0610"
+m_code <- "061"
 q_code <- "081"
 s_code <- "085"
 
@@ -240,8 +238,8 @@ bx_data_1 <- bx_hra[3:348,] %>%
 bx_z1 <- bx_zip_ct[[14]]
 
 bx_z1[[2]][,1] %>% map_df(function(x) filter(bx_data_1, areaid %in% x) %>% select(areaid, PA_PERSONS, PA_CASES, SSI_PERS, 
-                                                                                SSI_CASES, MED_PERS, MED_CASES, MED_NURS,
-                                                                                MED_TPERS, MED_TCASES)) %>%
+                                                                                  SSI_CASES, MED_PERS, MED_CASES, MED_NURS,
+                                                                                  MED_TPERS, MED_TCASES)) %>%
   left_join(bx_z1[[2]], by = c("areaid" = "fromareaid"))  %>%
   mutate(PA_PERSONS = as.numeric(PA_PERSONS) * overlap, PA_CASES = as.numeric(PA_CASES) * overlap, 
          SSI_PERS = as.numeric(SSI_PERS) * overlap, SSI_CASES = as.numeric(SSI_CASES) * overlap, 
@@ -261,20 +259,20 @@ bx_list_ct <- bx_zip_ct %>% map(function(x) x[[2]][,1])
 bx_dz1 <- c()
 #populate that dataframe with the zip code totals
 bx_data_1_zips <- map2(bx_list_ct, bx_zip_ct, ~ 
-            filter(bx_data_1, areaid %in% .x) %>% 
-            select(areaid, PA_PERSONS, PA_CASES, SSI_PERS,
-                 SSI_CASES, MED_PERS, MED_CASES, MED_NURS,
-                 MED_TPERS, MED_TCASES)  %>%
-            left_join(.y[[2]], by = c("areaid" = "fromareaid")) %>% 
-            mutate(PA_PERSONS = as.numeric(PA_PERSONS) * overlap, PA_CASES = as.numeric(PA_CASES) * overlap, 
-                   SSI_PERS = as.numeric(SSI_PERS) * overlap, SSI_CASES = as.numeric(SSI_CASES) * overlap, 
-                   MED_PERS = as.numeric(MED_PERS) * overlap, MED_CASES = as.numeric(MED_CASES) * overlap,
-                   MED_NURS = as.numeric(MED_NURS) * overlap, MED_TPERS = as.numeric(MED_TPERS) * overlap, 
-                   MED_TCASES = as.numeric(MED_TCASES) * overlap) %>%
-            summarise(PA_PERSONS = sum(PA_PERSONS), PA_CASES = sum(PA_CASES), SSI_PERS = sum(SSI_PERS),
-                      SSI_CASES = sum(SSI_CASES), MED_PERS = sum(MED_PERS), MED_CASES = sum(MED_CASES),
-                      MED_NURS = sum(MED_NURS), MED_TPERS = sum(MED_TPERS), MED_TCASES = sum(MED_TCASES)) %>%
-            mutate(newareaid = .y[[1]])
+                         filter(bx_data_1, areaid %in% .x) %>% 
+                         select(areaid, PA_PERSONS, PA_CASES, SSI_PERS,
+                                SSI_CASES, MED_PERS, MED_CASES, MED_NURS,
+                                MED_TPERS, MED_TCASES)  %>%
+                         left_join(.y[[2]], by = c("areaid" = "fromareaid")) %>% 
+                         mutate(PA_PERSONS = as.numeric(PA_PERSONS) * overlap, PA_CASES = as.numeric(PA_CASES) * overlap, 
+                                SSI_PERS = as.numeric(SSI_PERS) * overlap, SSI_CASES = as.numeric(SSI_CASES) * overlap, 
+                                MED_PERS = as.numeric(MED_PERS) * overlap, MED_CASES = as.numeric(MED_CASES) * overlap,
+                                MED_NURS = as.numeric(MED_NURS) * overlap, MED_TPERS = as.numeric(MED_TPERS) * overlap, 
+                                MED_TCASES = as.numeric(MED_TCASES) * overlap) %>%
+                         summarise(PA_PERSONS = sum(PA_PERSONS), PA_CASES = sum(PA_CASES), SSI_PERS = sum(SSI_PERS),
+                                   SSI_CASES = sum(SSI_CASES), MED_PERS = sum(MED_PERS), MED_CASES = sum(MED_CASES),
+                                   MED_NURS = sum(MED_NURS), MED_TPERS = sum(MED_TPERS), MED_TCASES = sum(MED_TCASES)) %>%
+                         mutate(newareaid = .y[[1]])
 ) %>%
   map_df(function(x) rbind(bx_dz1, x))
 
