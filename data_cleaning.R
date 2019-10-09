@@ -281,5 +281,30 @@ bx_data_1_zips <- map2(bx_list_ct, bx_zip_ct, ~
 
 #a moving average of census tract length to determine 
 library(zoo)
-ct_ma <- HRA01_raw1 %>%
-  mutate(ma2 = rollmeanr(ct_len, 5))
+HRA01_raw1 <- HRA01_raw1 %>%
+  mutate(ma2 = rollmean(ct_len, 10, fill= NA),
+         dfrnc = ct_len - ma2,
+         last_2 = substr(X2, ct_len -1, ct_len))
+
+rr <- HRA01_raw1 %>% filter(ct_len == 3 | ct_len == 4) %>%
+  mutate(dfrnc = ct_len - ma2, X2 = as.numeric(X2)) %>%
+  select(X1, X2, ct_len, ma2, dfrnc)
+
+#just everywhere for now
+#CONSTRUCT THE CENSUS TRACT WITH BORO CODES FOR everywhere
+ct_hra <- HRA01_raw1 %>%
+  mutate(ct = case_when(ct_len == 1 ~ str_c(boro_pattern, "000", X2, ".00"),
+                        ct_len == 2 ~ str_c(boro_pattern, "00", X2, ".00"),
+                        #ct_len == 3 ~ str_c(boro_pattern, "0", X2, ".00"),
+                        #ct_len == 4 ~ str_c(boro_pattern, "0", substr(X2, 1, 2), ".", substr(X2, 3, 4)),
+                        ct_len == 5 ~ str_c(boro_pattern, "00", substr(X2, 1, 3), ".", substr(X2, 4, 5)),
+                        ct_len == 3 & (!(last_2 %in% c("01", "02")) | dfrnc <= 0.6) ~ str_c(boro_pattern, "00", X2, ".00"),
+                        ct_len == 3 & last_2 %in% c("01", "02") & dfrnc > 0.6 ~ str_c(boro_pattern, "000", substr(X2, 1, 1), ".", substr(X2, 2, 3)),
+                        ct_len == 4 & !(last_2 %in% c("01", "02")) & dfrnc <= 0.5 ~ str_c(boro_pattern, "0", X2, ".00"),
+                        ct_len == 4 & last_2 %in% c("01", "02") & dfrnc > 0.5 ~ str_c(boro_pattern, "00", substr(X2, 1, 2), ".", substr(X2, 3, 4)))) %>%
+  mutate(areaid = str_c(ct, substr(boro_pattern, 1, 3), "CENTRAC1"))
+
+#manhattan 201 and 202 make an exception pls
+rr2 <- rr %>% filter(ct_len == 3)
+
+
