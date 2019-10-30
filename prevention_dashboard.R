@@ -3,6 +3,19 @@ library(ggplot2)
 library(shinydashboard)
 library(tidyverse)
 
+bg_color = "white"
+sc_1theme <- #theme_wsj() +
+  theme(
+    panel.background = element_rect(fill = bg_color),
+    plot.background = element_rect(fill = bg_color),
+    legend.background = element_rect(fill = bg_color),
+    legend.position = "none",
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_text(hjust = 0.5, face = "bold"),
+    panel.grid.major = element_line(color = "gray95"),
+    panel.border = element_blank(),
+    plot.title = element_text(size = 10)
+  )
 
 prev <- read_csv("https://raw.githubusercontent.com/katiesegreti/infoshare/master/prevention_clean.csv")
 chart_names1 <- read_csv("https://raw.githubusercontent.com/katiesegreti/infoshare/master/prevention_chart_names.csv")
